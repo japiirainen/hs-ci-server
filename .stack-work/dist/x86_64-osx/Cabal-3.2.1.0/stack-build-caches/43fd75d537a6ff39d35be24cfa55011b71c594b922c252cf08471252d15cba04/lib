@@ -1,0 +1,8 @@
+/Users/joona/dev/hs-ci-server/.stack-work/dist/x86_64-osx/Cabal-3.2.1.0/build/autogen/Paths_hs_ci_server.hs:
+  hash: 2163b544997557051f277decb3586cdcf061861e4dee89d8160aaedb3c3a37b4
+/Users/joona/dev/hs-ci-server/src/Core.hs:
+  hash: 9275c79d4c14cbeaa9b9d75579a393c400f6fc564ccc2746c04ed2e6de37eb71
+/Users/joona/dev/hs-ci-server/hs-ci-server.cabal:
+  hash: 8efd8a7f8a4bc9ba284b9dc5f8053b2ce3690407449c5796859f425138eecd3d
+/Users/joona/dev/hs-ci-server/package.yaml:
+  hash: e843aaab2c2daebc23098c3ec76b76af8e54f8b5ccee13262f5336e71519f324
