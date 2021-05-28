@@ -1,5 +1,4 @@
-
-name: hs-ci-server
+name: app
 
 default-extensions:
   - BlockArguments
@@ -37,7 +36,7 @@ library:
   source-dirs: src
 
 executables:
-  hs-ci-server:
+  app:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -45,10 +44,10 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - hs-ci-server
+      - app
 
 tests:
-  hs-ci-server-test:
+  test:
     main: Spec.hs
     source-dirs: test
     ghc-options:
@@ -56,5 +55,5 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - hs-ci-server
+      - app
       - hspec
