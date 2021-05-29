@@ -5,6 +5,7 @@ import qualified Docker
 import           RIO
 import qualified RIO.Map              as Map
 import qualified RIO.NonEmpty.Partial as NonEmpty.Partial
+import qualified System.Process.Typed as Process
 import           Test.Hspec
 
 makeStep :: Text -> Text -> [Text] -> Step
@@ -51,6 +52,10 @@ testRunSuccess docker = do
 main :: IO ()
 main = hspec do
     docker <- runIO Docker.createService
-    describe "CI" do
+    beforeAll cleanupDocker $ describe "CI" do
         it "should run a build (success)" do
             testRunSuccess docker
+
+cleanupDocker :: IO ()
+cleanupDocker = void do
+    Process.readProcessStdout "docker rm -f $(docker ps -aq --filter \"label=hs-ci-server\")"
