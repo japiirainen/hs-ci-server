@@ -28,6 +28,8 @@ dependencies:
   - typed-process
   - wai-cors
   - yaml
+  - ghcid
+  - record-dot-preprocessor
 
 ghc-options:
   - -F -pgmF=record-dot-preprocessor

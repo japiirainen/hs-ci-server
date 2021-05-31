@@ -32,11 +32,13 @@ library
     , async
     , base
     , butcher
+    , ghcid
     , hslogger
     , http-client
     , http-conduit
     , http-types
     , network
+    , record-dot-preprocessor
     , record-hasfield
     , rio
     , scotty
@@ -69,11 +71,13 @@ executable app
     , async
     , base
     , butcher
+    , ghcid
     , hslogger
     , http-client
     , http-conduit
     , http-types
     , network
+    , record-dot-preprocessor
     , record-hasfield
     , rio
     , scotty
@@ -107,12 +111,14 @@ test-suite test
     , async
     , base
     , butcher
+    , ghcid
     , hslogger
     , hspec
     , http-client
     , http-conduit
     , http-types
     , network
+    , record-dot-preprocessor
     , record-hasfield
     , rio
     , scotty

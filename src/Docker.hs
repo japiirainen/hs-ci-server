@@ -8,6 +8,12 @@ import           Network.HTTP.Simple as HTTP
 import           RIO
 import qualified Socket
 
+data ContainerStatus
+    = ContainerRunning
+    | ContainerExited ContainerExitCode
+    | ContainerOther Text
+    deriving (Eq, Show)
+
 newtype ContainerExitCode = ContainerExitCode Int
     deriving (Eq, Show)
 
@@ -27,6 +33,7 @@ data Service
     = Service
         { createContainer :: CreateContainerOptions -> IO ContainerId
         , startContainer  :: ContainerId -> IO ()
+        , containerStatus :: ContainerId -> IO ContainerStatus
         }
 
 containerIdToText :: ContainerId -> Text
@@ -43,6 +50,7 @@ createService = do
     pure Service
         { createContainer = createContainer_
         , startContainer = startContainer_
+        , containerStatus = undefined --TODO
         }
 
 createContainer_ :: CreateContainerOptions -> IO ContainerId
