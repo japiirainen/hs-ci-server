@@ -2,10 +2,10 @@ module Main where
 
 import           Core
 import qualified Docker
-import qualified Runner
 import           RIO
 import qualified RIO.Map              as Map
 import qualified RIO.NonEmpty.Partial as NonEmpty.Partial
+import qualified Runner
 import qualified System.Process.Typed as Process
 import           Test.Hspec
 
@@ -20,15 +20,6 @@ makeStep name image commands
 makePipeline :: [Step] -> Pipeline
 makePipeline steps = Pipeline { steps  = NonEmpty.Partial.fromList steps }
 
-runBuild :: Docker.Service -> Build -> IO Build
-runBuild docker build = do
-    newBuild <- Core.progress docker build
-    case newBuild.state of
-        BuildFinished _ ->
-            pure newBuild
-        _ -> do
-            threadDelay (1 * 1000 * 1000)
-            runBuild docker newBuild
 
 testRunSuccess :: Runner.Service -> IO ()
 testRunSuccess runner = do
