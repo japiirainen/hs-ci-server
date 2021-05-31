@@ -8,12 +8,22 @@ import qualified Docker
 data Service
     = Service
         { runBuild :: Build -> IO Build
+        , prepareBuild :: Pipeline -> IO Build
         }
 
 createService :: Docker.Service -> IO Service
 createService docker = do
     pure Service
         { runBuild = runBuild_ docker
+        , prepareBuild = prepareBuild_ docker
+        }
+
+prepareBuild_ :: Docker.Service -> Pipeline -> IO Build
+prepareBuild_ docker pipeline = do
+    pure Build
+        { pipeline = pipeline
+        , state = BuildReady
+        , completedSteps = mempty
         }
 
 runBuild_ :: Docker.Service -> Build -> IO Build
