@@ -1,5 +1,6 @@
 module Core where
 
+import qualified Data.Aeson            as Aeson
 import qualified Data.Time.Clock.POSIX as Time
 import qualified Docker
 import           RIO
@@ -12,7 +13,7 @@ data Pipeline
     = Pipeline
         {steps :: NonEmpty Step
         }
-        deriving (Eq, Show)
+        deriving (Eq, Show, Generic, Aeson.FromJSON)
 
 data Step
     = Step
@@ -20,7 +21,7 @@ data Step
         , commands :: NonEmpty Text
         , image    :: Docker.Image
         }
-        deriving (Eq, Show)
+        deriving (Eq, Show, Generic, Aeson.FromJSON)
 
 
 data Build
@@ -30,18 +31,18 @@ data Build
         , completedSteps :: Map StepName StepResult
         , volume         :: Docker.Volume
         }
-        deriving (Eq, Show)
+        deriving (Eq, Show, Generic)
 
 data StepResult
     = StepFailed Docker.ContainerExitCode
     | StepSucceeded
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic)
 
 data BuildState
     = BuildReady
     | BuildRunning BuildRunningState
     | BuildFinished BuildResult
-     deriving (Eq, Show)
+     deriving (Eq, Show, Generic)
 
 data BuildRunningState
     = BuildRunningState
@@ -57,7 +58,7 @@ data BuildResult
      deriving (Eq, Show)
 
 newtype StepName = StepName Text
-    deriving (Eq, Show, Ord)
+    deriving (Eq, Show, Ord, Generic, Aeson.FromJSON)
 
 type LogCollection = Map StepName CollectionStatus
 
@@ -113,6 +114,7 @@ progress docker build =
                                 , volume = build.volume
                                 }
 
+                    docker.pullImage step.image
                     container <- docker.createContainer options
                     docker.startContainer container
 

@@ -7,6 +7,8 @@ import qualified Data.Aeson.Types      as Aeson.Types
 import           Data.Time.Clock.POSIX as Time
 import           Network.HTTP.Simple   as HTTP
 import           RIO
+import qualified RIO.Text              as Text
+import qualified RIO.Text.Partial      as Text.Partial
 import qualified Socket
 
 data ContainerStatus
@@ -18,7 +20,7 @@ data ContainerStatus
 newtype ContainerExitCode = ContainerExitCode Int
     deriving (Eq, Show)
 
-newtype Image = Image Text
+data Image = Image { name :: Text, tag :: Text }
     deriving (Eq, Show)
 
 data CreateContainerOptions
@@ -49,6 +51,7 @@ data Service
         , containerStatus :: ContainerId -> IO ContainerStatus
         , createVolume    :: IO Volume
         , fetchLogs       :: FetchLogsOptions -> IO ByteString
+        , pullImage       :: Image -> IO ()
         }
 
 type RequestBuilder = Text -> HTTP.Request
@@ -60,7 +63,7 @@ exitCodeToInt :: ContainerExitCode -> Int
 exitCodeToInt (ContainerExitCode code) = code
 
 imageToText :: Image -> Text
-imageToText (Image image) = image
+imageToText image = image.name <> ":" <> image.tag
 
 volumeToText :: Volume -> Text
 volumeToText (Volume v) = v
@@ -81,6 +84,7 @@ createService = do
         , containerStatus = containerStatus_ makeReq
         , createVolume = createVolume_ makeReq
         , fetchLogs = fetchLogs_ makeReq
+        , pullImage = pullImage_ makeReq
         }
 
 createContainer_ :: RequestBuilder -> CreateContainerOptions -> IO ContainerId
@@ -191,3 +195,27 @@ fetchLogs_ makeReq options = do
 
     res <- HTTP.httpBS $ makeReq url
     pure $ HTTP.getResponseBody res
+
+
+pullImage_ :: RequestBuilder -> Image -> IO ()
+pullImage_ makeReq image = do
+    let url =  "/images/create?tag="
+            <> image.tag
+            <> "&fromImage="
+            <> image.name
+
+    let req = makeReq url
+            & HTTP.setRequestMethod "POST"
+
+    void $ HTTP.httpBS req
+
+
+instance Aeson.FromJSON Image where
+    parseJSON = Aeson.withText "parse-image" $ \image -> do
+      case Text.Partial.splitOn ":" image of
+        [name] ->
+          pure $ Image { name = name, tag = "latest" }
+        [name, tag] ->
+          pure $ Image { name = name, tag = tag }
+        _ ->
+          fail $ "Image has too many colons " <> Text.unpack image
