@@ -76,7 +76,7 @@ data Log = Log
     deriving (Eq, Show, Generic, Serialise.Serialise)
 
 newtype BuildNumber = BuildNumber Int
-    deriving (Eq, Show, Generic, Serialise.Serialise)
+    deriving (Eq, Show, Generic, Serialise.Serialise, Ord)
 
 buildNumberToInt :: BuildNumber -> Int
 buildNumberToInt (BuildNumber n) = n

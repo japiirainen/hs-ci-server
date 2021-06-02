@@ -6,6 +6,7 @@ import           Core
 import qualified Data.Yaml                as Yaml
 import qualified Docker
 import qualified JobHandler
+import qualified JobHandler.Memory
 import           RIO
 import qualified RIO.ByteString           as ByteString
 import qualified RIO.Map                  as Map
@@ -142,7 +143,7 @@ cleanupDocker = void do
 
 testServerAndAgent :: Runner.Service -> IO ()
 testServerAndAgent runner = do
-    let handler = undefined :: JobHandler.Service
+    handler <- JobHandler.Memory.createService
 
     serverThread <- Async.async do
         Server.run (Server.Config 9000) handler
