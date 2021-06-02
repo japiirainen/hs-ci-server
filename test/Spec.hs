@@ -54,6 +54,7 @@ emptyHooks :: Runner.Hooks
 emptyHooks =
       Runner.Hooks
         { logCollected = \_ -> pure ()
+        , buildUpdated = \_ -> pure ()
         }
 
 
@@ -102,7 +103,7 @@ testLogCollection runner = do
                     (_, "") -> pure () -- not found
                     _       -> modifyMVar_ expected (pure . Set.delete word)
 
-    let hooks = Runner.Hooks { logCollected = onLog }
+    let hooks = Runner.Hooks { logCollected = onLog, buildUpdated = \_ -> pure () }
 
     build <- runner.prepareBuild $ makePipeline
                 [ makeStep "Long step" "ubuntu" ["echo hello", "sleep 2", "echo world"]
