@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-deprecations #-}
 module Docker where
 
+import qualified Codec.Serialise       as Serialise
 import           Data.Aeson            ((.:))
 import qualified Data.Aeson            as Aeson
 import qualified Data.Aeson.Types      as Aeson.Types
@@ -18,10 +19,10 @@ data ContainerStatus
     deriving (Eq, Show)
 
 newtype ContainerExitCode = ContainerExitCode Int
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data Image = Image { name :: Text, tag :: Text }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data CreateContainerOptions
     = CreateContainerOptions
@@ -39,10 +40,10 @@ data FetchLogsOptions
     }
 
 newtype ContainerId = ContainerId Text
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 newtype Volume = Volume Text
-    deriving (Eq, Show)
+    deriving (Eq, Show, Serialise.Serialise, Generic)
 
 data Service
     = Service

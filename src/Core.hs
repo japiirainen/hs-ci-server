@@ -1,5 +1,6 @@
 module Core where
 
+import qualified Codec.Serialise       as Serialise
 import qualified Data.Aeson            as Aeson
 import qualified Data.Time.Clock.POSIX as Time
 import qualified Docker
@@ -13,7 +14,7 @@ data Pipeline
     = Pipeline
         {steps :: NonEmpty Step
         }
-        deriving (Eq, Show, Generic, Aeson.FromJSON)
+        deriving (Eq, Show, Generic, Aeson.FromJSON, Serialise.Serialise)
 
 data Step
     = Step
@@ -21,7 +22,7 @@ data Step
         , commands :: NonEmpty Text
         , image    :: Docker.Image
         }
-        deriving (Eq, Show, Generic, Aeson.FromJSON)
+        deriving (Eq, Show, Generic, Aeson.FromJSON, Serialise.Serialise)
 
 
 data Build
@@ -31,34 +32,34 @@ data Build
         , completedSteps :: Map StepName StepResult
         , volume         :: Docker.Volume
         }
-        deriving (Eq, Show, Generic)
+        deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data StepResult
     = StepFailed Docker.ContainerExitCode
     | StepSucceeded
-    deriving (Eq, Show, Generic)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data BuildState
     = BuildReady
     | BuildRunning BuildRunningState
     | BuildFinished BuildResult
-     deriving (Eq, Show, Generic)
+     deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data BuildRunningState
     = BuildRunningState
         { step      :: StepName
         , container :: Docker.ContainerId
         }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 data BuildResult
     = BuildSucceeded
     | BuildFailed
     | BuildUnexpectedState Text
-     deriving (Eq, Show)
+     deriving (Eq, Show, Generic, Serialise.Serialise)
 
 newtype StepName = StepName Text
-    deriving (Eq, Show, Ord, Generic, Aeson.FromJSON)
+    deriving (Eq, Show, Ord, Generic, Aeson.FromJSON, Serialise.Serialise)
 
 type LogCollection = Map StepName CollectionStatus
 
@@ -72,10 +73,10 @@ data Log = Log
     { output :: ByteString
     , step   :: StepName
     }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 newtype BuildNumber = BuildNumber Int
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, Serialise.Serialise)
 
 buildNumberToInt :: BuildNumber -> Int
 buildNumberToInt (BuildNumber n) = n
