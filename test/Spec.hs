@@ -3,12 +3,15 @@ module Main where
 import qualified Agent
 import qualified Control.Concurrent.Async as Async
 import           Core
+import qualified Data.Aeson               as Aeson
 import qualified Data.Yaml                as Yaml
 import qualified Docker
 import qualified JobHandler
 import qualified JobHandler.Memory
+import qualified Network.HTTP.Simple      as HTTP
 import           RIO
 import qualified RIO.ByteString           as ByteString
+import qualified RIO.HashMap              as HashMap
 import qualified RIO.Map                  as Map
 import qualified RIO.NonEmpty.Partial     as NonEmpty.Partial
 import qualified RIO.Set                  as Set
@@ -23,20 +26,22 @@ main = hspec do
     runner <- runIO $ Runner.createService docker
 
     beforeAll cleanupDocker $ describe "CI" do
-        it "should run a build (success)" do
-            testRunSuccess runner
-        it "should run a build (failure)" do
-            testRunFailure runner
-        it "should share workspace bethween steps" do
-            testSharedWorkspace docker runner
-        it "should collect logs" do
-            testLogCollection runner
-        it "should pull images" do
-            testImagePull runner
-        it "should decode pipelines" do
-            testYamlDecoding runner
-        it "should run server and agent" do
-            testServerAndAgent runner
+        -- it "should run a build (success)" do
+        --     testRunSuccess runner
+        -- it "should run a build (failure)" do
+        --     testRunFailure runner
+        -- it "should share workspace bethween steps" do
+        --     testSharedWorkspace docker runner
+        -- it "should collect logs" do
+        --     testLogCollection runner
+        -- it "should pull images" do
+        --     testImagePull runner
+        -- it "should decode pipelines" do
+        --     testYamlDecoding runner
+        -- it "should run server and agent" do
+        --     testServerAndAgent runner
+        it "should process webhooks" do
+            testWebhookTrigger runner
 
 
 makeStep :: Text -> Text -> [Text] -> Step
@@ -143,30 +148,14 @@ cleanupDocker = void do
 
 
 testServerAndAgent :: Runner.Service -> IO ()
-testServerAndAgent runner = do
-    handler <- JobHandler.Memory.createService
+testServerAndAgent =
+    runServerAndAgent $ \handler -> do
+        let pipeline =
+                makePipeline [ makeStep "agent-test" "busybox" ["echo hello", "echo from agent"]
+                ]
+        number <- handler.queueJob pipeline
+        checkBuild handler number
 
-    serverThread <- Async.async do
-        Server.run (Server.Config 9000) handler
-
-    Async.link serverThread
-
-    agentThread <- Async.async do
-        Agent.run (Agent.Config "http://localhost:9000") runner
-
-    Async.link agentThread
-
-    let pipeline = makePipeline
-            [ makeStep "agent-test" "busybox" ["echo hello", "echo from agent"]
-            ]
-
-    number <- handler.queueJob pipeline
-    checkBuild handler number
-
-    Async.cancel serverThread
-    Async.cancel agentThread
-
-    pure ()
 
 checkBuild :: JobHandler.Service -> BuildNumber -> IO ()
 checkBuild handler number = loop
@@ -179,3 +168,44 @@ checkBuild handler number = loop
                         BuildFinished s -> s `shouldBe` BuildSucceeded
                         _               -> loop
                 _ -> loop
+
+
+
+
+
+testWebhookTrigger :: Runner.Service -> IO ()
+testWebhookTrigger =
+  runServerAndAgent $ \handler -> do
+    base <- HTTP.parseRequest "http://localhost:9000"
+
+    let req =
+          base
+            & HTTP.setRequestMethod "POST"
+            & HTTP.setRequestPath "/webhook/github"
+            & HTTP.setRequestBodyFile "test/github-payload.sample.json"
+
+    res <- HTTP.httpBS req
+
+    let Right (Aeson.Object build) = Aeson.eitherDecodeStrict $ HTTP.getResponseBody res
+    let Just (Aeson.Number number) = HashMap.lookup "number" build
+
+    checkBuild handler $ Core.BuildNumber (round number)
+
+
+runServerAndAgent :: (JobHandler.Service -> IO ()) -> Runner.Service -> IO ()
+runServerAndAgent callback runner = do
+  handler <- JobHandler.Memory.createService
+  serverThread <- Async.async do
+    Server.run (Server.Config 9000) handler
+
+  Async.link serverThread
+
+  agentThread <- Async.async do
+    Agent.run (Agent.Config "http://localhost:9000") runner
+
+  Async.link agentThread
+
+  callback handler
+
+  Async.cancel serverThread
+  Async.cancel agentThread
