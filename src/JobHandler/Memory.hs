@@ -38,6 +38,10 @@ createService = do
 
         , processMsg = \msg -> STM.atomically do
             STM.modifyTVar' state $ processMsg_ msg
+
+        , fetchLogs = \number step -> STM.atomically do
+            s <- STM.readTVar state
+            pure $ fetchLogs_ number step s
         }
 
 queueJob_ :: Pipeline -> State -> (BuildNumber, State)
@@ -84,3 +88,8 @@ processMsg_ msg state =
             let updatedLogs
                     = Map.insertWith (flip mappend) (number, log.step) log.output state.logs
             in state{logs = updatedLogs}
+
+
+fetchLogs_ :: BuildNumber -> StepName -> State -> Maybe ByteString
+fetchLogs_ number step state =
+    Map.lookup (number, step) state.logs

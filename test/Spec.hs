@@ -26,20 +26,20 @@ main = hspec do
     runner <- runIO $ Runner.createService docker
 
     beforeAll cleanupDocker $ describe "CI" do
-        -- it "should run a build (success)" do
-        --     testRunSuccess runner
-        -- it "should run a build (failure)" do
-        --     testRunFailure runner
-        -- it "should share workspace bethween steps" do
-        --     testSharedWorkspace docker runner
-        -- it "should collect logs" do
-        --     testLogCollection runner
-        -- it "should pull images" do
-        --     testImagePull runner
-        -- it "should decode pipelines" do
-        --     testYamlDecoding runner
-        -- it "should run server and agent" do
-        --     testServerAndAgent runner
+        it "should run a build (success)" do
+            testRunSuccess runner
+        it "should run a build (failure)" do
+            testRunFailure runner
+        it "should share workspace bethween steps" do
+            testSharedWorkspace docker runner
+        it "should collect logs" do
+            testLogCollection runner
+        it "should pull images" do
+            testImagePull runner
+        it "should decode pipelines" do
+            testYamlDecoding runner
+        it "should run server and agent" do
+            testServerAndAgent runner
         it "should process webhooks" do
             testWebhookTrigger runner
 
