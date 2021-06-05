@@ -1,16 +1,17 @@
 module Server where
 
-import qualified Codec.Serialise    as Serialise
+import qualified Codec.Serialise             as Serialise
 import           Core
-import qualified Data.Aeson         as Aeson
+import qualified Data.Aeson                  as Aeson
 import qualified Github
 import qualified JobHandler
-import qualified Network.HTTP.Types as HTTP.Types
+import qualified Network.HTTP.Types          as HTTP.Types
+import qualified Network.Wai.Middleware.Cors as Cors
 import           RIO
-import qualified RIO.Map            as Map
-import qualified RIO.NonEmpty       as NonEmpty
-import qualified System.Log.Logger  as Logger
-import qualified Web.Scotty         as Scotty
+import qualified RIO.Map                     as Map
+import qualified RIO.NonEmpty                as NonEmpty
+import qualified System.Log.Logger           as Logger
+import qualified Web.Scotty                  as Scotty
 
 data Config
     = Config
@@ -20,6 +21,7 @@ data Config
 run :: Config -> JobHandler.Service -> IO ()
 run config handler =
     Scotty.scotty config.port do
+        Scotty.middleware Cors.simpleCors
         Scotty.post "/agent/pull" do
             cmd <- Scotty.liftAndCatchIO do
                 handler.dispatchCmd
@@ -43,7 +45,7 @@ run config handler =
                 pipeline <- Github.fetchRemotePipeline info
 
                 let step = Github.createCloneStep info
-                handler.queueJob $ pipeline
+                handler.queueJob info $ pipeline
                     { steps = NonEmpty.cons step pipeline.steps
                     }
 
@@ -71,6 +73,11 @@ run config handler =
 
             Scotty.raw $ fromStrictBytes $ fromMaybe "" log
 
+        Scotty.get "/build" do
+            jobs <- Scotty.liftAndCatchIO do
+                handler.latestJobs
+
+            Scotty.json $ jobs <&> \(number, job) -> jobToJson number job
 
             pure ()
 

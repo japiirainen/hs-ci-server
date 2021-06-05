@@ -8,6 +8,7 @@ data Job
     = Job
         { pipeline :: Pipeline
         , state    :: JobState
+        , info     :: CommitInfo
         }
        deriving (Eq, Show)
 
@@ -24,12 +25,16 @@ data Service
         , processMsg  :: Agent.Msg -> IO ()
         , findJob     :: BuildNumber -> IO (Maybe Job)
         , fetchLogs   :: BuildNumber -> StepName -> IO (Maybe ByteString)
+        , latestJobs  :: IO [(BuildNumber, Job)]
         }
 
 
 data CommitInfo
     = CommitInfo
-        { sha  :: Text
-        , repo :: Text
+        { sha     :: Text
+        , branch  :: Text
+        , message :: Text
+        , author  :: Text
+        , repo    :: Text
         }
         deriving (Eq, Show)
