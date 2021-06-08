@@ -2,6 +2,7 @@ module JobHandler where
 
 import qualified Agent
 import           Core
+import qualified Data.Aeson as Aeson
 import           RIO
 
 data Job
@@ -20,7 +21,7 @@ data JobState
 
 data Service
     = Service
-        { queueJob    :: Pipeline -> IO BuildNumber
+        { queueJob    :: CommitInfo -> Pipeline -> IO BuildNumber
         , dispatchCmd :: IO (Maybe Agent.Cmd)
         , processMsg  :: Agent.Msg -> IO ()
         , findJob     :: BuildNumber -> IO (Maybe Job)
@@ -37,4 +38,4 @@ data CommitInfo
         , author  :: Text
         , repo    :: Text
         }
-        deriving (Eq, Show)
+        deriving (Eq, Show, Generic, Aeson.ToJSON)
